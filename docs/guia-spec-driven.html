@@ -1,0 +1,447 @@
+<title>Guía Spec-Driven</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: manual técnico con navegación por pestañas; una columna, gutter fijo */
+:root{
+  --bg:#f6f7f8; --surface:#ffffff; --fg:#1b2228; --muted:#5a6672;
+  --accent:#0e7569; --accent-soft:#e2f1ef; --line:#d8dee3;
+  --warn:#9a3412; --warn-soft:#fdeee3; --ok:#166534; --ok-soft:#e5f3e8;
+  --code-bg:#eef1f3;
+  --font-body:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c; --surface:#1d2329; --fg:#e8ecef; --muted:#9aa6b0;
+    --accent:#3fc1b0; --accent-soft:#12302c; --line:#323c44;
+    --warn:#f0a06c; --warn-soft:#3a2317; --ok:#7ed49a; --ok-soft:#15301d;
+    --code-bg:#272f36; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c; --surface:#1d2329; --fg:#e8ecef; --muted:#9aa6b0;
+  --accent:#3fc1b0; --accent-soft:#12302c; --line:#323c44;
+  --warn:#f0a06c; --warn-soft:#3a2317; --ok:#7ed49a; --ok-soft:#15301d;
+  --code-bg:#272f36; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);line-height:1.6;font-size:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:0 48px;}
+.wrap{max-width:860px;margin:0 auto;min-width:0}
+header{padding-block:40px 20px}
+.eyebrow{font-family:var(--font-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.15;margin:.3em 0 .25em;text-wrap:balance;font-weight:700}
+.lede{color:var(--muted);max-width:62ch;margin:0}
+nav{display:flex;flex-wrap:wrap;gap:8px;margin:24px 0 28px;position:sticky;top:env(safe-area-inset-top,0px);
+  background:var(--bg);padding-block:10px;z-index:5;border-bottom:1px solid var(--line)}
+nav button{font-family:var(--font-body);font-size:14px;font-weight:600;color:var(--muted);
+  background:transparent;border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+nav button:hover{color:var(--fg);border-color:var(--muted)}
+nav button.active{background:var(--accent);border-color:var(--accent);color:#fff}
+:root[data-theme="dark"] nav button.active{color:#0c1512}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav button.active{color:#0c1512}}
+nav button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.panel{display:none}
+section.panel.active{display:block}
+h2{font-size:22px;margin:28px 0 8px;text-wrap:balance}
+h3{font-size:16px;margin:22px 0 6px}
+p{margin:.5em 0;max-width:68ch}
+ul,ol{margin:.5em 0;padding-left:1.4em;max-width:68ch}
+li{margin:.3em 0}
+li::marker{color:var(--accent);font-weight:600}
+code{font-family:var(--font-mono);font-size:.86em;background:var(--code-bg);padding:.12em .4em;border-radius:5px}
+.diagram{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;margin:18px 0;overflow-x:auto}
+.diagram figcaption{font-size:13px;color:var(--muted);margin-top:8px;font-family:var(--font-mono)}
+.mermaid{min-width:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin:16px 0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;min-width:0}
+.card h3{margin:0 0 4px;font-size:15px}
+.card p{font-size:14px;color:var(--muted);margin:0}
+.card .k{font-family:var(--font-mono);font-size:12px;color:var(--accent);font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.say{font-family:var(--font-mono);font-size:13.5px;background:var(--code-bg);border-left:3px solid var(--accent);
+  padding:8px 12px;border-radius:0 8px 8px 0;margin:10px 0;max-width:68ch}
+.say b{color:var(--accent)}
+.rule{background:var(--warn-soft);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:0 8px 8px 0;
+  padding:10px 14px;margin:14px 0;max-width:68ch}
+.rule b{color:var(--warn)}
+.tip{background:var(--ok-soft);border:1px solid var(--line);border-left:3px solid var(--ok);border-radius:0 8px 8px 0;
+  padding:10px 14px;margin:14px 0;max-width:68ch}
+.tip b{color:var(--ok)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;margin:14px 0}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+th{font-family:var(--font-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);text-align:left}
+th,td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td code{white-space:nowrap}
+details{background:var(--surface);border:1px solid var(--line);border-radius:10px;margin:8px 0;padding:0}
+summary{cursor:pointer;padding:11px 14px;font-weight:600;list-style:none;display:flex;gap:10px;align-items:baseline}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+";font-family:var(--font-mono);color:var(--accent);font-weight:600;flex:none}
+details[open] summary::before{content:"–"}
+summary .cat{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--muted);font-weight:400;flex:none}
+details .body{padding:0 14px 12px 34px;color:var(--fg)}
+details .body p{font-size:14.5px}
+.glofilter{width:100%;max-width:68ch;font-family:var(--font-body);font-size:15px;color:var(--fg);
+  background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;margin:12px 0 6px}
+.glofilter:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.steps{counter-reset:paso;list-style:none;padding-left:0}
+.steps>li{counter-increment:paso;display:grid;grid-template-columns:34px 1fr;gap:10px;margin:12px 0;min-width:0}
+.steps>li::before{content:counter(paso);font-family:var(--font-mono);font-weight:600;color:var(--accent);
+  background:var(--accent-soft);border-radius:8px;width:30px;height:30px;display:grid;place-items:center;font-size:14px}
+.steps b{display:block}
+.golden{list-style:none;padding:0;counter-reset:oro}
+.golden li{counter-increment:oro;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:12px 14px 12px 48px;margin:8px 0;position:relative;max-width:none}
+.golden li::before{content:counter(oro);position:absolute;left:14px;top:12px;font-family:var(--font-mono);
+  font-weight:600;color:var(--accent)}
+footer{margin-top:40px;border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--muted);font-family:var(--font-mono)}
+@media (prefers-reduced-motion: no-preference){
+  section.panel.active{animation:fade .25s ease}
+  @keyframes fade{from{opacity:.4}to{opacity:1}}
+}
+</style>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Spec-Driven Development · GitHub Copilot</div>
+  <h1>Guía Spec-Driven</h1>
+  <p class="lede">Tu proceso profesional con IA en 4 fases: la IA ejecuta, vos decidís. Esta guía cubre el día a día, los 11 skills y, en el anexo, cada término explicado en detalle.</p>
+</header>
+
+<nav aria-label="Secciones">
+  <button data-tab="sistema" class="active">El sistema</button>
+  <button data-tab="nuevo">Proyecto nuevo</button>
+  <button data-tab="dia">Día a día</button>
+  <button data-tab="mant">Mantenimiento</button>
+  <button data-tab="existente">Ya empezado</button>
+  <button data-tab="equipo">Equipo y versiones</button>
+  <button data-tab="glosario">Anexo: glosario</button>
+</nav>
+
+<!-- ==================== EL SISTEMA ==================== -->
+<section class="panel active" id="sistema">
+  <h2>El sistema en un vistazo</h2>
+  <p>Todo proyecto entra por una de tres puertas — nuevo, ya empezado, o prototipo desechable — y termina en el mismo ciclo: construir por historias, auditar en sesión limpia, publicar con tag.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+    Q{"¿Qué tenés<br/>entre manos?"} -->|Proyecto nuevo| F1["1 · especificar<br/>SPEC.md — el contrato"]
+    Q -->|Ya empezado| D0["0 · diagnostico<br/>¿está bien armado?"]
+    Q -->|Idea de una tarde| PR["prototipo<br/>DESECHABLE.md"]
+    F1 --> F2["2 · disenar<br/>2 opciones, elegís vos"]
+    F2 --> F25["2.5 · historias<br/>BACKLOG.md"]
+    F25 --> F3["3 · construir<br/>código + tests"]
+    F3 --> F4["4 · revisar<br/>auditoría en sesión limpia"]
+    F4 -->|NO SE INTEGRA| F3
+    F4 -->|INTEGRA| QH{"¿Quedan<br/>historias?"}
+    QH -->|Sí| F3
+    QH -->|No| REL["release<br/>tag + CHANGELOG"]
+    D0 --> AD["adoptar<br/>spec al revés"]
+    AD --> F3
+    PR -.->|salió bien: graduarlo| D0
+    REL --> MANT["mantener<br/>bugs y ajustes"]
+    MANT --> F3
+</pre>
+  <figcaption>El ciclo de vida completo: tres puertas de entrada, un solo ciclo.</figcaption>
+  </figure>
+
+  <h2>Dónde vive cada cosa</h2>
+  <div class="cards">
+    <div class="card"><span class="k">Contrato</span><h3><code>AGENTS.md</code></h3><p>Las reglas permanentes. Copilot lo carga siempre, sin que lo pidas.</p></div>
+    <div class="card"><span class="k">Skills</span><h3><code>.github/skills/</code></h3><p>Las 11 fases y herramientas. Se activan nombrándolas en Copilot.</p></div>
+    <div class="card"><span class="k">Qué hace</span><h3><code>docs/SPEC.md</code></h3><p>El contrato funcional: qué hace, qué entra y qué NO en esta versión.</p></div>
+    <div class="card"><span class="k">Qué falta</span><h3><code>docs/BACKLOG.md</code></h3><p>Historias con criterios de aceptación y su estado. Tu tablero.</p></div>
+    <div class="card"><span class="k">Base técnica</span><h3><code>docs/PIECES.md</code></h3><p>Piezas de infraestructura: modelo de datos, runner de tests.</p></div>
+    <div class="card"><span class="k">Historia</span><h3><code>git</code></h3><p>Commits, ramas, tags. El estado real que nadie puede olvidar.</p></div>
+  </div>
+
+  <div class="rule"><b>Regla de fondo.</b> Lo que no está en la spec no existe. Nada se commitea sin tests en verde. La IA que escribió el código nunca lo audita. Y el estado vive en los archivos, nunca en tu memoria.</div>
+
+  <h2>Las reglas de oro</h2>
+  <ol class="golden">
+    <li>La spec es el contrato: los desvíos se preguntan antes de ejecutarse.</li>
+    <li>La IA propone, vos decidís: arquitectura, backlog, veredictos y versiones son tuyos.</li>
+    <li>Sin tests en verde no hay commit; sin auditoría en sesión limpia no hay integración.</li>
+    <li>Ante la duda de dónde estabas: decí <b>"estado"</b> y el sistema te ubica.</li>
+    <li>Línea roja del vibecodeo: usuarios, datos reales o meses de mantenimiento → proceso completo.</li>
+  </ol>
+</section>
+
+<!-- ==================== PROYECTO NUEVO ==================== -->
+<section class="panel" id="nuevo">
+  <h2>De la idea a la v1</h2>
+  <p>Cada fase se dispara con una frase. El orden es fijo y cada skill verifica que la anterior exista antes de arrancar.</p>
+
+  <h3>Puesta a punto (una sola vez)</h3>
+  <ol class="steps">
+    <li><div><b>Copiá la plantilla al repo</b> <code>AGENTS.md</code> + carpeta <code>.github/</code> completa. Proyecto nuevo: también <code>docs/</code>.</div></li>
+    <li><div><b>git init y primer commit</b> con esos archivos.</div></li>
+    <li><div><b>Modo de trabajo</b> en <code>AGENTS.md</code>: <code>solo</code> o <code>equipo</code>.</div></li>
+  </ol>
+
+  <h3>Las fases, una a una</h3>
+  <ol class="steps">
+    <li><div><b>Especificar</b> — 10 min a 1 h. Te entrevista: qué hace en UNA frase, qué entra y qué NO, datos y stack. Sale <code>docs/SPEC.md</code>.
+      <div class="say">Decile: <b>"arranquemos la spec"</b></div></div></li>
+    <li><div><b>Diseñar</b> — propone exactamente 2 arquitecturas con pros y contras y se detiene. Elegís vos; tu porqué queda en <code>docs/ARCHITECTURE.md</code>.
+      <div class="say">Decile: <b>"diseñemos"</b></div></div></li>
+    <li><div><b>Historias</b> — convierte cada funcionalidad en características (F1, F2…) e historias con criterios Dado/Cuando/Entonces. Validás una por una.
+      <div class="say">Decile: <b>"armemos el backlog"</b></div></div></li>
+    <li><div><b>Construir</b> — una unidad por vez: primero las piezas de base, después historia por historia. Cada criterio de aceptación se vuelve un test. Leés el código en serio y solo con tu OK y la suite en verde hay commit.
+      <div class="say">Decile: <b>"siguiente historia"</b></div></div></li>
+    <li><div><b>Revisar</b> — en una <b>sesión nueva de Copilot</b>. Corre la suite y evalúa 5 criterios. Veredicto INTEGRA o NO SE INTEGRA; decidís vos al final.
+      <div class="say">Sesión limpia: <b>"revisá"</b> (o el agente <b>auditor</b>)</div></div></li>
+  </ol>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart LR
+    H["Historia F1-H2<br/>pendiente"] --> C["construir<br/>código + tests"]
+    C --> L["Leés y preguntás"]
+    L -->|ajustes| C
+    L -->|tu OK + suite verde| K["commit<br/>feat: F1-H2"]
+    K --> A["Sesión limpia<br/>revisar"]
+    A -->|INTEGRA| V["revisada ✓"]
+    A -->|NO SE INTEGRA| C
+</pre>
+  <figcaption>El bucle de cada historia: construir → leer → commit → auditar.</figcaption>
+  </figure>
+
+  <div class="tip"><b>Los 5 criterios del auditor.</b> ¿Qué pasa con un dato inesperado? · ¿Hay algo inseguro? · ¿Podrías explicar este código a otra persona? · ¿Los tests prueban algo de verdad? · ¿Se cumplen los criterios de aceptación? Uno que falle = NO SE INTEGRA.</div>
+</section>
+
+<!-- ==================== DÍA A DÍA ==================== -->
+<section class="panel" id="dia">
+  <h2>Un día normal de trabajo</h2>
+  <p>Arranca con una palabra y termina con un estado escrito. Nunca tenés que acordarte dónde quedaste.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+    S["09:00 — Abrís Copilot<br/><i>«estado»</i>"] --> R["Te dice fase, qué quedó<br/>a medias y qué sigue"]
+    R --> T["Tomás la historia del día"]
+    T --> B["construir: leés,<br/>preguntás, ajustás"]
+    B --> G{"¿Algo fuera<br/>de la spec?"}
+    G -->|Sí| P["El agente frena:<br/>¿spec o descarte?"]
+    P --> B
+    G -->|No| OK["Suite verde + tu OK<br/>→ commit"]
+    OK --> BUG{"¿Entró un bug<br/>urgente?"}
+    BUG -->|Sí| M["mantener: test que<br/>reproduce → fix mínimo"]
+    M --> OK2["commit fix: + volvés<br/>a tu historia"]
+    OK2 --> AU
+    BUG -->|No| AU["17:00 — Sesión limpia:<br/>revisar / auditor"]
+    AU -->|INTEGRA| FIN["Merge (solo) o PR (equipo)<br/>+ estado actualizado"]
+    AU -->|NO SE INTEGRA| MA["Las correcciones te<br/>esperan mañana"]
+</pre>
+  <figcaption>Del "estado" matutino al cierre con auditoría.</figcaption>
+  </figure>
+
+  <div class="tip"><b>Regla práctica.</b> Una historia no queda <code>en construcción</code> más de un día o dos. Si pasa, era muy grande: partila en el backlog.</div>
+
+  <h3>Los tres momentos que importan</h3>
+  <div class="cards">
+    <div class="card"><span class="k">Apertura</span><h3>"estado"</h3><p>El agente lee docs + git y te ubica. Cero memoria, cero notas sueltas.</p></div>
+    <div class="card"><span class="k">Desvíos</span><h3>"¿Spec o descarte?"</h3><p>Todo pedido fuera del contrato se frena y se decide: así el alcance no se infla solo.</p></div>
+    <div class="card"><span class="k">Cierre</span><h3>Sesión limpia</h3><p>La auditoría del día. Quien escribió no se audita: abrís Copilot de cero.</p></div>
+  </div>
+</section>
+
+<!-- ==================== MANTENIMIENTO ==================== -->
+<section class="panel" id="mant">
+  <h2>Mantenimiento: bugs y ajustes</h2>
+  <p>El skill <code>mantener</code> clasifica el pedido antes de tocar código — y la clasificación decide todo el camino.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+    P["Llega un pedido"] --> Q{"¿Qué es?"}
+    Q -->|"El código no hace<br/>lo que dice la spec"| BUG["BUG"]
+    Q -->|"Cambia el CÓMO,<br/>no el QUÉ"| AJ["AJUSTE MENOR"]
+    Q -->|"Cambia el QUÉ"| FEAT["FUNCIONALIDAD NUEVA"]
+    BUG --> B1["1. Test que reproduce<br/>el fallo — en rojo"]
+    B1 --> B2["2. Corrección mínima"]
+    B2 --> B3["3. Suite completa verde<br/>+ causa raíz explicada"]
+    B3 --> B4["commit fix:<br/>con test de regresión"]
+    AJ --> A1["La spec no se toca.<br/>Tests existentes = la red"]
+    A1 --> A2{"¿'Necesita' cambiar<br/>un test?"}
+    A2 -->|Sí| FEAT
+    A2 -->|No| A3["commit refactor:/perf:"]
+    FEAT --> F1["No es mantenimiento:<br/>SPEC primero → backlog<br/>→ construir → revisar"]
+</pre>
+  <figcaption>Clasificar primero: bug, ajuste o feature disfrazada.</figcaption>
+  </figure>
+
+  <div class="rule"><b>Nada de "ya que estamos".</b> Lo que encuentres de paso se anota, no se arregla en el mismo commit. Un commit = una intención.</div>
+
+  <h3>Revisión proporcional</h3>
+  <ul>
+    <li><b>Trivial</b> (texto, estilo, ajuste local con tests en verde): alcanza con tu lectura.</li>
+    <li><b>Toca seguridad, datos, dinero o una pieza <code>heredada (sin auditar)</code></b>: auditoría en sesión limpia — y es la oportunidad de auditar la pieza heredada entera.</li>
+  </ul>
+</section>
+
+<!-- ==================== YA EMPEZADO ==================== -->
+<section class="panel" id="existente">
+  <h2>Proyecto ya empezado (o prototipo que salió bien)</h2>
+  <p>Nunca entres directo: el paso 0 es <code>diagnostico</code>, que recorre el proyecto <b>con vos</b>, área por área, preguntando qué fue decisión y qué salió así. El informe queda en <code>docs/DIAGNOSTICO.md</code> con una de cuatro rutas.</p>
+
+  <figure class="diagram">
+<pre class="mermaid">
+flowchart TD
+    D["diagnostico<br/>exploración + análisis conjunto"] --> V{"Veredicto<br/>(lo elegís vos)"}
+    V -->|"Está razonable"| R1["ADOPTAR DIRECTO<br/>spec al revés + heredadas<br/>auditoría oportunista"]
+    V -->|"Era prototipo y<br/>quiere producción"| R2["GRADUAR<br/>auditoría completa ANTES<br/>de usuarios o datos reales"]
+    V -->|"Cumple como<br/>prototipo"| R3["SIGUE DESECHABLE<br/>DESECHABLE.md<br/>no invertir más"]
+    V -->|"La idea vale,<br/>el código no"| R4["RESCATAR Y REESCRIBIR<br/>la spec se salva,<br/>el código se rehace"]
+    R2 --> G["Todo revisada ✓<br/>→ se borra DESECHABLE.md<br/>= graduación"]
+</pre>
+  <figcaption>Las cuatro rutas de salida del diagnóstico.</figcaption>
+  </figure>
+
+  <h3>Qué hace <code>adoptar</code></h3>
+  <ol class="steps">
+    <li><div><b>Spec al revés</b> — borrador de <code>SPEC.md</code> con lo que el código hace HOY, con <code>(?)</code> en lo dudoso. Vos lo validás punto por punto.</div></li>
+    <li><div><b>Arquitectura como es</b> — sin embellecer, con la deuda detectada como inventario (no se corrige nada en esta fase).</div></li>
+    <li><div><b>Piezas heredadas</b> — todo lo existente entra como <code>heredada (sin auditar)</code> y se audita cuando el mantenimiento lo toca. Sin runner de tests, configurarlo es la primera pieza nueva.</div></li>
+  </ol>
+
+  <div class="rule"><b>Línea roja del vibecodeo.</b> ¿Va a tener usuarios? ¿Datos reales? ¿Meses de mantenimiento? Cualquier sí → proceso completo. Un prototipo "muy bien armado" sin tests ni auditoría es una sensación, no un hecho.</div>
+</section>
+
+<!-- ==================== EQUIPO Y VERSIONES ==================== -->
+<section class="panel" id="equipo">
+  <h2>Equipo y versiones</h2>
+  <p>Cuando se suma la otra persona, cambiás una línea en <code>AGENTS.md</code> (<code>Modo de trabajo: equipo</code>) y entra el flujo de ramas.</p>
+
+  <ul>
+    <li><b><code>main</code> protegida</b>: todo — código, docs, mantenimiento — va por rama + pull request.</li>
+    <li><b>Vos sos el dueño</b>: revisás y mergeás todos los PRs. Nada del colaborador entra sin tu OK; tus propios PRs entran con la auditoría IA aprobada.</li>
+    <li><b>Squash merge</b>: un commit por unidad en <code>main</code>. Dueño por historia en el backlog; nunca dos personas en los mismos archivos.</li>
+  </ul>
+
+  <figure class="diagram">
+<pre class="mermaid">
+gitGraph
+    commit id: "docs: adopción"
+    commit id: "feat: modelo de datos"
+    branch historia/F1-H1
+    checkout historia/F1-H1
+    commit id: "feat: F1-H1 alta de pedidos"
+    checkout main
+    branch fix/timeout-login
+    checkout fix/timeout-login
+    commit id: "fix: timeout en login"
+    checkout main
+    merge historia/F1-H1
+    merge fix/timeout-login
+    commit id: "chore: release v0.2.0" tag: "v0.2.0"
+</pre>
+  <figcaption>Una rama por unidad, squash a main, tag anotado al cerrar.</figcaption>
+  </figure>
+
+  <h3>Cerrar una versión: skill <code>release</code></h3>
+  <ol class="steps">
+    <li><div><b>Precondiciones</b> — <code>main</code> limpio y actualizado, sin historias a medias ni PRs abiertos de la versión.</div></li>
+    <li><div><b>Suite completa en verde</b> — con la salida a la vista. En rojo no hay release.</div></li>
+    <li><div><b>Bump semver propuesto</b> leyendo los commits desde el último tag — solo <code>fix:</code> → PATCH · hay <code>feat:</code> → MINOR · se rompió el contrato → MAJOR. <b>El número lo aprobás vos.</b></div></li>
+    <li><div><b>Con tu OK</b> — entrada en <code>CHANGELOG.md</code> en lenguaje de usuario, commit de release, tag anotado y push con tags.</div></li>
+  </ol>
+
+  <div class="rule"><b>Un tag es una promesa.</b> No se mueve ni se borra. Si la versión salió mal, se corrige con un PATCH nuevo.</div>
+</section>
+
+<!-- ==================== GLOSARIO ==================== -->
+<section class="panel" id="glosario">
+  <h2>Anexo: todos los términos en detalle</h2>
+  <p>Agrupados por tema. Usá el buscador o desplegá cada término.</p>
+  <input class="glofilter" type="search" placeholder="Filtrar términos… (ej: historia, squash, regresión)" aria-label="Filtrar términos del glosario">
+
+  <h3>El proceso</h3>
+  <details><summary>Spec (especificación) <span class="cat">proceso</span></summary><div class="body"><p>El documento que define el <b>qué</b> del proyecto: qué hace en una frase, qué funcionalidades tiene esta versión, cuáles NO tiene todavía, qué datos maneja y con qué tecnología. Vive en <code>docs/SPEC.md</code> y es el <b>contrato</b> con el agente: cualquier trabajo que se desvíe de lo escrito se frena y se vuelve a la spec. Una spec desactualizada es peor que no tener spec, por eso los cambios de alcance se escriben ahí primero, en su propio commit.</p></div></details>
+  <details><summary>Característica (feature) <span class="cat">proceso</span></summary><div class="body"><p>Una funcionalidad completa vista desde el usuario, por ejemplo "gestión de pedidos". En el backlog lleva un id (<code>F1</code>, <code>F2</code>…) y agrupa varias historias de usuario. Es el mismo concepto que las "Features" de Azure DevOps o las épicas chicas de Jira: el nivel intermedio entre la spec y las historias.</p></div></details>
+  <details><summary>Historia de usuario <span class="cat">proceso</span></summary><div class="body"><p>La unidad de trabajo del día a día: un corte <b>vertical</b> de funcionalidad que el usuario puede ver andando. Se escribe <i>"Como &lt;rol&gt;, quiero &lt;acción&gt;, para &lt;beneficio&gt;"</i> — por ejemplo: "Como operador, quiero filtrar pedidos por estado, para encontrar los atrasados". Lleva id (<code>F1-H2</code>), entre 2 y 5 criterios de aceptación, y su tamaño ideal es "se construye en una sesión". Una historia = un commit (o un PR en equipo).</p></div></details>
+  <details><summary>Criterio de aceptación (Dado/Cuando/Entonces) <span class="cat">proceso</span></summary><div class="body"><p>La condición observable que dice cuándo una historia está terminada, en formato Given/When/Then: <i>"Dado un pedido en estado enviado, cuando filtro por 'pendiente', entonces ese pedido no aparece"</i>. Describe comportamiento, nunca implementación. En este sistema cada criterio se convierte en al menos un test automatizado, y el auditor verifica que se cumplan: son el puente entre lo que el negocio pidió y lo que el código prueba.</p></div></details>
+  <details><summary>Backlog <span class="cat">proceso</span></summary><div class="body"><p>La lista ordenada y priorizada de todo lo que falta construir, agrupada en características e historias. Vive en <code>docs/BACKLOG.md</code> y funciona como tablero: cada historia tiene estado (<code>pendiente → en construcción → construida (pendiente de revisión) → revisada ✓</code>) y, en equipo, dueño. El orden del backlog es el orden de construcción, y lo decidís vos: valor primero, dependencias después.</p></div></details>
+  <details><summary>Pieza (técnica) <span class="cat">proceso</span></summary><div class="body"><p>Un bloque de infraestructura que no es una historia porque el usuario no lo "ve", pero sin el cual nada funciona: el modelo de datos, el runner de tests, la configuración base. Viven en <code>docs/PIECES.md</code> y se construyen antes de la primera historia. En proyectos adoptados, el código viejo también se parte en piezas.</p></div></details>
+  <details><summary>Unidad de trabajo <span class="cat">proceso</span></summary><div class="body"><p>Lo que <code>construir</code> toma de a uno: una historia del backlog o una pieza técnica. La regla es una unidad por invocación, un commit por unidad — nunca "generame todo el proyecto".</p></div></details>
+  <details><summary>Auditoría / sesión limpia <span class="cat">proceso</span></summary><div class="body"><p>La fase 4: una sesión <b>nueva</b> de Copilot, sin el contexto de quien escribió el código, lo revisa como auditor externo. "Limpia" significa sin memoria de la conversación donde se construyó — así la IA no defiende su propio trabajo. Evalúa 5 criterios (datos inesperados, seguridad, explicabilidad, calidad de tests, criterios de aceptación) y emite un veredicto. La decisión final siempre es humana.</p></div></details>
+  <details><summary>INTEGRA / NO SE INTEGRA <span class="cat">proceso</span></summary><div class="body"><p>El veredicto binario del auditor. INTEGRA: la unidad puede entrar a <code>main</code>. NO SE INTEGRA: al menos un criterio falló y la unidad vuelve a construcción con la lista de correcciones — sin excepciones ni "pero es un detalle". El auditor nunca corrige lo que audita; solo reporta.</p></div></details>
+  <details><summary>Heredada (sin auditar) <span class="cat">proceso</span></summary><div class="body"><p>El estado de las piezas que ya existían cuando adoptaste el proceso: funcionan, pero nadie las revisó con los criterios del sistema. Se auditan de forma <b>oportunista</b> — cuando el mantenimiento toca una, pasa entera por <code>revisar</code> — salvo en la graduación de un prototipo, donde se auditan todas antes de que entren usuarios o datos reales.</p></div></details>
+  <details><summary>Vibecodear <span class="cat">proceso</span></summary><div class="body"><p>Construir con IA a pura conversación, sin spec, sin piezas ni auditoría, priorizando velocidad de aprendizaje. En este sistema está <b>permitido con permiso</b>: solo para prototipos de una tarde, scripts desechables o exploración de librerías, y siempre registrado con <code>DESECHABLE.md</code>. La línea roja: usuarios, datos reales o meses de mantenimiento.</p></div></details>
+  <details><summary>DESECHABLE.md / graduación <span class="cat">proceso</span></summary><div class="body"><p><code>DESECHABLE.md</code> es el archivo en la raíz que declara "este código no pasó por el proceso y no va a producción". Mientras existe, se vibecodea sin culpa. Si el prototipo quiere sobrevivir, se <b>gradúa</b>: diagnóstico, adopción, auditoría completa de todas las piezas, y recién cuando todo está <code>revisada ✓</code> se borra el archivo. Ese borrado es el acto de graduación.</p></div></details>
+  <details><summary>Deuda técnica <span class="cat">proceso</span></summary><div class="body"><p>Todo atajo que hoy ahorra tiempo y mañana lo cobra con intereses: código duplicado, falta de tests, acoplamiento, nombres crípticos. El diagnóstico la inventaría sin corregirla; la diferencia clave es entre deuda <b>asumida</b> (sabías y decidiste) y deuda <b>invisible</b> (salió así y nadie lo sabe). La primera es gestión; la segunda, riesgo.</p></div></details>
+
+  <h3>Git</h3>
+  <details><summary>Commit <span class="cat">git</span></summary><div class="body"><p>Una foto del proyecto en un momento dado, con autor, fecha y mensaje. Es la unidad mínima de historia: podés volver a cualquier commit, comparar entre dos, o entender qué cambió y por qué. En este sistema la regla es un commit por unidad aprobada, con código y tests juntos — así cada commit cuenta una historia completa.</p></div></details>
+  <details><summary>Conventional commits (feat, fix, chore…) <span class="cat">git</span></summary><div class="body"><p>Una convención para los mensajes de commit: un prefijo que declara la intención. <code>feat:</code> funcionalidad nueva · <code>fix:</code> corrección de bug · <code>refactor:</code> cambio interno sin cambiar comportamiento · <code>perf:</code> rendimiento · <code>docs:</code> documentación · <code>chore:</code> tareas de infraestructura (como el release). No es cosmética: el skill <code>release</code> lee estos prefijos para proponer el número de versión, y el CHANGELOG se arma desde ellos.</p></div></details>
+  <details><summary>Rama (branch) y main <span class="cat">git</span></summary><div class="body"><p>Una rama es una línea de trabajo paralela: cambios que conviven sin pisarse hasta que decidís unirlos. <code>main</code> es la rama principal — la versión "oficial" del proyecto, que en este sistema siempre está en verde y siempre es publicable. En modo equipo <code>main</code> está protegida: nadie commitea directo; se entra solo por PR. Las ramas de trabajo se nombran por unidad: <code>historia/F2-H3-filtrar-pedidos</code>, <code>fix/timeout-login</code>.</p></div></details>
+  <details><summary>Pull Request (PR) <span class="cat">git</span></summary><div class="body"><p>El pedido formal de "quiero unir mi rama a main": GitHub muestra todos los cambios lado a lado para que alguien los revise, comente y apruebe antes del merge. Es la compuerta de calidad del trabajo en equipo. En tu sistema: el colaborador abre PRs y vos, como dueño, los revisás y mergeás; tus propios PRs entran con la auditoría IA aprobada como filtro previo.</p></div></details>
+  <details><summary>Merge y squash merge <span class="cat">git</span></summary><div class="body"><p>Merge es unir una rama a otra. El <b>squash</b> merge aplasta todos los commits intermedios de la rama en uno solo al entrar a <code>main</code> — así la rama puede tener diez commits de "ajusto esto, pruebo aquello", pero <code>main</code> conserva la regla de un commit limpio por unidad. El historial de main queda legible: cada línea es una historia o un fix completo.</p></div></details>
+  <details><summary>Tag (anotado) <span class="cat">git</span></summary><div class="body"><p>Una etiqueta clavada en un commit exacto, que marca "acá está la versión v1.2.0". El tag <b>anotado</b> (<code>git tag -a</code>) guarda además autor, fecha y mensaje — por eso se prefiere siempre al "lightweight", que es solo un puntero. Un tag publicado es una promesa: no se mueve ni se borra; si la versión salió mal, se publica un PATCH nuevo. Se taggea solo <code>main</code>, solo con la suite en verde.</p></div></details>
+  <details><summary>Semver (versionado semántico) <span class="cat">git</span></summary><div class="body"><p>El estándar de numeración <code>vMAYOR.MINOR.PATCH</code> donde cada número comunica el tipo de cambio: <b>PATCH</b> (v1.0.0 → v1.0.1) solo corrige bugs, actualizar es seguro · <b>MINOR</b> (v1.0.0 → v1.1.0) agrega funcionalidad sin romper lo existente · <b>MAJOR</b> (v1.0.0 → v2.0.0) rompe compatibilidad: algo que funcionaba cambia o desaparece. En tu sistema el MAJOR queda atado a la spec: si el contrato rompió algo que existía, es v2.</p></div></details>
+  <details><summary>CHANGELOG <span class="cat">git</span></summary><div class="body"><p>El archivo que cuenta, versión por versión y en lenguaje de usuario, qué se agregó, qué se corrigió y qué cambió. Se escribe para quien usa el proyecto, no para quien lo programó — "ahora podés filtrar pedidos por estado", no "feat: F2-H3". El skill <code>release</code> lo arma leyendo los commits desde el último tag.</p></div></details>
+  <details><summary>Working tree (árbol de trabajo) <span class="cat">git</span></summary><div class="body"><p>Tus archivos tal como están ahora en el disco, incluyendo lo que todavía no commiteaste. "Working tree limpio" significa que no hay cambios sin commitear — precondición del release, porque taggear con cambios sueltos es taggear algo que no está en la historia.</p></div></details>
+  <details><summary>Push / pull <span class="cat">git</span></summary><div class="body"><p><code>push</code> sube tus commits al repositorio remoto (GitHub); <code>pull</code> baja los de los demás a tu máquina. En equipo, la rutina es pull de <code>main</code> antes de crear tu rama (para nacer actualizado) y push de tu rama para abrir el PR. Los tags necesitan su propio push: <code>git push --tags</code>.</p></div></details>
+
+  <h3>Testing</h3>
+  <details><summary>Test / suite <span class="cat">testing</span></summary><div class="body"><p>Un test es un programa chiquito que verifica automáticamente que una parte del código hace lo que debe: le da una entrada conocida y comprueba la salida esperada. La <b>suite</b> es el conjunto completo de tests del proyecto, que se corre con un solo comando. "Suite en verde" = todos pasan; "en rojo" = al menos uno falla. En este sistema, sin suite en verde no hay commit, no hay release y no hay veredicto positivo.</p></div></details>
+  <details><summary>Runner de tests <span class="cat">testing</span></summary><div class="body"><p>La herramienta que descubre y ejecuta los tests y reporta el resultado (pytest en Python, Jest o Vitest en JavaScript, etc.). Configurarlo es siempre la primera pieza técnica de un proyecto — sin runner, ni <code>mantener</code> ni <code>revisar</code> pueden funcionar.</p></div></details>
+  <details><summary>Test de regresión <span class="cat">testing</span></summary><div class="body"><p>El test que se escribe al corregir un bug para que ese bug <b>no pueda volver</b> sin que la suite lo grite. En el flujo de <code>mantener</code> se escribe primero, se verifica que falla (reproduce el bug), y recién entonces se corrige. Queda para siempre en la suite: es la cicatriz que inmuniza.</p></div></details>
+  <details><summary>Test de aceptación <span class="cat">testing</span></summary><div class="body"><p>El test que verifica un criterio de aceptación de una historia, nombrado de forma que se reconozca el criterio. Es la traducción directa de "Dado/Cuando/Entonces" a código ejecutable: si el negocio pidió que el pedido enviado no aparezca en el filtro de pendientes, hay un test que lo comprueba.</p></div></details>
+  <details><summary>Camino feliz y casos borde <span class="cat">testing</span></summary><div class="body"><p>El camino feliz es el escenario donde todo sale bien: datos válidos, usuario que hace lo esperado. Los casos <b>borde</b> son todo lo demás: nulos, vacíos, tipos erróneos, números negativos o enormes, strings raros, archivos corruptos. Un conjunto de tests que solo cubre el camino feliz da falsa seguridad — por eso el auditor exige al menos un criterio de error por historia y castiga los tests que no pueden fallar.</p></div></details>
+  <details><summary>Test-first <span class="cat">testing</span></summary><div class="body"><p>Escribir el test <b>antes</b> que el código que lo hace pasar. En este sistema se aplica a los bugs: si no podés escribir un test que falle reproduciendo el fallo, todavía no entendiste el bug. El test en rojo es la prueba de que entendiste; el fix que lo pone en verde, la prueba de que corregiste.</p></div></details>
+  <details><summary>Causa raíz <span class="cat">testing</span></summary><div class="body"><p>El porqué profundo de un bug, a diferencia del síntoma. "Se rompía porque llegaba un null" es síntoma; "el formulario permite guardar sin fecha desde la versión 1.2" es causa raíz. El flujo de bug exige que el agente te la explique: parchear síntomas garantiza que el bug vuelva con otra cara.</p></div></details>
+</section>
+
+<footer>Sistema spec-driven · 11 skills · plantilla en <code>Agentic Software Engineering\plantilla-spec-driven</code></footer>
+</div>
+
+<script>
+(function(){
+  var tabs=document.querySelectorAll('nav button');
+  var panels=document.querySelectorAll('section.panel');
+  function show(id,push){
+    panels.forEach(function(p){p.classList.toggle('active',p.id===id)});
+    tabs.forEach(function(b){b.classList.toggle('active',b.dataset.tab===id)});
+    if(push){try{history.replaceState(null,'','#'+id)}catch(e){}}
+    try{localStorage.setItem('sd-tab',id)}catch(e){}
+    window.scrollTo({top:0});
+  }
+  tabs.forEach(function(b){b.addEventListener('click',function(){show(b.dataset.tab,true)})});
+  var initial=null;
+  var h=(location.hash||'').replace('#','');
+  if(h&&document.getElementById(h))initial=h;
+  if(!initial){try{var s=localStorage.getItem('sd-tab');if(s&&document.getElementById(s))initial=s}catch(e){}}
+  if(initial)show(initial,false);
+
+  var filter=document.querySelector('.glofilter');
+  if(filter){
+    filter.addEventListener('input',function(){
+      var q=filter.value.trim().toLowerCase();
+      document.querySelectorAll('#glosario details').forEach(function(d){
+        var hit=!q||d.textContent.toLowerCase().indexOf(q)>-1;
+        d.hidden=!hit;
+        if(q&&hit)d.open=true;
+        if(!q)d.open=false;
+      });
+      document.querySelectorAll('#glosario h3').forEach(function(h3){
+        var any=false,el=h3.nextElementSibling;
+        while(el&&el.tagName==='DETAILS'){if(!el.hidden){any=true;break}el=el.nextElementSibling}
+        h3.hidden=q?!any:false;
+      });
+    });
+  }
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.9.1/mermaid.min.js"></script>
+<script>
+/* Solo para la copia local: el visor de artifacts renderiza mermaid solo; abierto desde disco necesita la librería */
+if(window.mermaid){
+  var dark=false;
+  try{dark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches}catch(e){}
+  mermaid.initialize({startOnLoad:true,theme:dark?'dark':'neutral'});
+}
+</script>
